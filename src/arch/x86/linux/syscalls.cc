@@ -169,4 +169,11 @@ setThreadArea32Func(SyscallDesc *desc, ThreadContext *tc,
     return 0;
 }
 
+SyscallReturn
+schedGetaffinityFunc(SyscallDesc *desc, ThreadContext *tc,
+                     pid_t pid, size_t cpusetsize, Addr mask)
+{
+    return 1;
+}
+
 } // namespace X86ISA

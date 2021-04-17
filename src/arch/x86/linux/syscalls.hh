@@ -61,6 +61,9 @@ struct UserDesc32 {
 SyscallReturn setThreadArea32Func(SyscallDesc *desc, ThreadContext *tc,
                                   VPtr<UserDesc32> userDesc);
 
+SyscallReturn schedGetaffinityFunc(SyscallDesc *desc, ThreadContext *tc,
+                                   pid_t pid, size_t cpusetsize, Addr mask);
+
 } // namespace X86ISA
 
 #endif // __ARCH_X86_LINUX_SYSCALLS_HH__
