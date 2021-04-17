@@ -209,7 +209,8 @@ GPUComputeDriver::ioctl(ThreadContext *tc, unsigned req, Addr ioc_buf)
             TypedBufferArg<kfd_ioctl_create_event_args> args(ioc_buf);
             args.copyIn(virt_proxy);
             if (args->event_type != KFD_IOC_EVENT_SIGNAL) {
-                fatal("Signal events are only supported currently\n");
+                warn("Signal events are only supported currently (Event type: %d)\n", args->event_type);
+                break;
             } else if (eventSlotIndex == SLOTS_PER_PAGE) {
                 fatal("Signal event wasn't created; signal limit reached\n");
             }
@@ -300,8 +301,8 @@ GPUComputeDriver::ioctl(ThreadContext *tc, unsigned req, Addr ioc_buf)
                         "\tamdkfd wait for event %d\n", EventData->event_id);
                 panic_if(ETable.count(EventData->event_id) == 0,
                          "Event ID invalid, cannot set this event\n");
-                panic_if(ETable[EventData->event_id].threadWaiting,
-                         "Multiple threads waiting on the same event\n");
+		if (ETable[EventData->event_id].threadWaiting)
+                         warn("Multiple threads waiting on the same event\n");
                 if (ETable[EventData->event_id].setEvent) {
                     // If event is already set, the event has already happened.
                     // Just unset the event and dont put this thread to sleep.
@@ -351,45 +352,19 @@ GPUComputeDriver::ioctl(ThreadContext *tc, unsigned req, Addr ioc_buf)
             warn("unimplemented ioctl: AMDKFD_IOC_DBG_WAVE_CONTROL\n");
           }
           break;
-        case AMDKFD_IOC_ALLOC_MEMORY_OF_GPU:
+        case AMDKFD_IOC_SET_SCRATCH_BACKING_VA:
           {
-            warn("unimplemented ioctl: AMDKFD_IOC_ALLOC_MEMORY_OF_GPU\n");
+            warn("unimplemented ioctl: AMDKFD_IOC_SET_SCRATCH_BACKING_VA\n");
           }
           break;
-        case AMDKFD_IOC_FREE_MEMORY_OF_GPU:
+        case AMDKFD_IOC_GET_TILE_CONFIG:
           {
-            warn("unimplemented ioctl: AMDKFD_IOC_FREE_MEMORY_OF_GPU\n");
-          }
-          break;
-        case AMDKFD_IOC_MAP_MEMORY_TO_GPU:
-          {
-            warn("unimplemented ioctl: AMDKFD_IOC_MAP_MEMORY_TO_GPU\n");
-          }
-          break;
-        case AMDKFD_IOC_UNMAP_MEMORY_FROM_GPU:
-          {
-            warn("unimplemented ioctl: AMDKFD_IOC_UNMAP_MEMORY_FROM_GPU\n");
-          }
-          break;
-        case AMDKFD_IOC_ALLOC_MEMORY_OF_SCRATCH:
-          {
-            warn("unimplemented ioctl: AMDKFD_IOC_ALLOC_MEMORY_OF_SCRATCH\n");
-          }
-          break;
-        case AMDKFD_IOC_SET_CU_MASK:
-          {
-            warn("unimplemented ioctl: AMDKFD_IOC_SET_CU_MASK\n");
-          }
-          break;
-        case AMDKFD_IOC_SET_PROCESS_DGPU_APERTURE:
-          {
-            warn("unimplemented ioctl: AMDKFD_IOC_SET_PROCESS_DGPU_APERTURE"
-                 "\n");
+            warn("unimplemented ioctl: AMDKFD_IOC_GET_TILE_CONFIG\n");
           }
           break;
         case AMDKFD_IOC_SET_TRAP_HANDLER:
           {
-            warn("unimplemented ioctl: AMDKFD_IOC_SET_TRAP_HANDLER\n");
+            warn("unimplemented ioctl: AMDKFD_SET_TRAP_HANDLER\n");
           }
           break;
         case AMDKFD_IOC_GET_PROCESS_APERTURES_NEW:
@@ -436,6 +411,41 @@ GPUComputeDriver::ioctl(ThreadContext *tc, unsigned req, Addr ioc_buf)
             ioc_args.copyOut(virt_proxy);
           }
           break;
+        case AMDKFD_IOC_ACQUIRE_VM:
+          {
+            warn("unimplemented ioctl: AMDKFD_IOC_ACQUIRE_VM\n");
+          }
+          break;
+        case AMDKFD_IOC_ALLOC_MEMORY_OF_GPU:
+          {
+            warn("unimplemented ioctl: AMDKFD_IOC_ALLOC_MEMORY_OF_GPU\n");
+          }
+          break;
+        case AMDKFD_IOC_FREE_MEMORY_OF_GPU:
+          {
+            warn("unimplemented ioctl: AMDKFD_IOC_FREE_MEMORY_OF_GPU\n");
+          }
+          break;
+        case AMDKFD_IOC_MAP_MEMORY_TO_GPU:
+          {
+            warn("unimplemented ioctl: AMDKFD_IOC_MAP_MEMORY_TO_GPU\n");
+          }
+          break;
+        case AMDKFD_IOC_UNMAP_MEMORY_FROM_GPU:
+          {
+            warn("unimplemented ioctl: AMDKFD_IOC_UNMAP_MEMORY_FROM_GPU\n");
+          }
+          break;
+        case AMDKFD_IOC_SET_CU_MASK:
+          {
+            warn("unimplemented ioctl: AMDKFD_IOC_SET_CU_MASK\n");
+          }
+          break;
+        case AMDKFD_IOC_GET_QUEUE_WAVE_STATE:
+          {
+            warn("unimplemented ioctl: AMDKFD_IOC_GET_QUEUE_WAVE_STATE\n");
+          }
+          break;
         case AMDKFD_IOC_GET_DMABUF_INFO:
           {
             warn("unimplemented ioctl: AMDKFD_IOC_GET_DMABUF_INFO\n");
@@ -446,29 +456,14 @@ GPUComputeDriver::ioctl(ThreadContext *tc, unsigned req, Addr ioc_buf)
             warn("unimplemented ioctl: AMDKFD_IOC_IMPORT_DMABUF\n");
           }
           break;
-        case AMDKFD_IOC_GET_TILE_CONFIG:
+        case AMDKFD_IOC_ALLOC_QUEUE_GWS:
           {
-            warn("unimplemented ioctl: AMDKFD_IOC_GET_TILE_CONFIG\n");
+            warn("unimplmented ioctl: AMDKFD_IOC_ALLOC_QUEUE_GWS\n");
           }
           break;
-        case AMDKFD_IOC_IPC_IMPORT_HANDLE:
+        case AMDKFD_IOC_SMI_EVENTS:
           {
-            warn("unimplemented ioctl: AMDKFD_IOC_IPC_IMPORT_HANDLE\n");
-          }
-          break;
-        case AMDKFD_IOC_IPC_EXPORT_HANDLE:
-          {
-            warn("unimplemented ioctl: AMDKFD_IOC_IPC_EXPORT_HANDLE\n");
-          }
-          break;
-        case AMDKFD_IOC_CROSS_MEMORY_COPY:
-          {
-            warn("unimplemented ioctl: AMDKFD_IOC_CROSS_MEMORY_COPY\n");
-          }
-          break;
-        case AMDKFD_IOC_OPEN_GRAPHIC_HANDLE:
-          {
-            warn("unimplemented ioctl: AMDKFD_IOC_OPEN_GRAPHIC_HANDLE\n");
+            warn("unimplemented ioctl: AMDKFD_IOC_SMI_EVENTS\n");
           }
           break;
         default:
