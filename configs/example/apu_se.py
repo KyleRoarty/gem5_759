@@ -418,6 +418,7 @@ hsapp_gpu_map_paddr = int(Addr(options.mem_size))
 
 # HSA kernel mode driver
 gpu_driver = GPUComputeDriver(filename="kfd")
+render_driver = GPURenderDriver(filename="dri/renderD128")
 
 # Creating the GPU kernel launching components: that is the HSA
 # packet processor (HSAPP), GPU command processor (CP), and the
@@ -473,7 +474,7 @@ else:
            "HSA_ENABLE_INTERRUPT=1"]
 
 process = Process(executable = executable, cmd = [options.cmd]
-                  + options.options.split(), drivers = [gpu_driver], env = env)
+                  + options.options.split(), drivers = [gpu_driver, render_driver], env = env)
 
 for cpu in cpu_list:
     cpu.createThreads()

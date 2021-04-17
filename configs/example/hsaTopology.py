@@ -97,6 +97,7 @@ def createHsaTopology(options):
                 'vendor_id 4098\n'                                          + \
                 'device_id 39028\n'                                         + \
                 'location_id 8\n'                                           + \
+                'drm_render_minor 128\n'                                    + \
                 'max_engine_clk_fcompute %s\n'                                \
                     % int(toFrequency(options.gpu_clock) / 1e6)             + \
                 'local_mem_size 0\n'                                        + \

@@ -237,6 +237,10 @@ class GPUComputeDriver(HSADriver):
     type = 'GPUComputeDriver'
     cxx_header = 'gpu-compute/gpu_compute_driver.hh'
 
+class GPURenderDriver(EmulatedDriver):
+    type = 'GPURenderDriver'
+    cxx_header = 'gpu-compute/gpu_render_driver.hh'
+
 class GPUDispatcher(SimObject):
     type = 'GPUDispatcher'
     cxx_header = 'gpu-compute/dispatcher.hh'
