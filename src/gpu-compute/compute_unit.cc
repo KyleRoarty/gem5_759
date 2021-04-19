@@ -712,6 +712,20 @@ ComputeUnit::releaseWFsFromBarrier(int bar_id)
     }
 }
 
+void
+ComputeUnit::setWgBarrier(int bar_id)
+{
+    auto &wg_barrier = barrierSlot(bar_id);
+    wg_barrier.setWgBarrier(true);
+}
+
+bool
+ComputeUnit::isWgBarrier(int bar_id)
+{
+    auto &wg_barrier = barrierSlot(bar_id);
+    return wg_barrier.isWgBarrier();
+}
+
 // Execute one clock worth of work on the ComputeUnit.
 void
 ComputeUnit::exec()

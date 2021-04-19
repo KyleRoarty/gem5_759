@@ -122,6 +122,8 @@ GPUDispatcher::dispatch(HSAQueueEntry *task)
     execIds.push(task->dispatchId());
     dispatchActive = true;
     hsaQueueEntries.emplace(task->dispatchId(), task);
+    wgBarrierMap.emplace(task->dispatchId(),
+                         std::vector<WgInfo>(task->numWgTotal()));
 
     if (!tickEvent.scheduled()) {
         schedule(&tickEvent, curTick() + shader->clockPeriod());
@@ -298,6 +300,7 @@ GPUDispatcher::notifyWgCompl(Wavefront *wf)
     auto task = hsaQueueEntries[kern_id];
     assert(task->dispatchId() == kern_id);
     task->notifyWgCompleted();
+    wgBarrierMap[kern_id][wf->wgId].isFinished = true;
 
     DPRINTF(GPUWgLatency, "WG Complete cycle:%d wg:%d kernel:%d cu:%d\n",
         curTick(), wf->wgId, kern_id, wf->computeUnit->cu_id);
@@ -334,6 +337,32 @@ GPUDispatcher::notifyWgCompl(Wavefront *wf)
     if (!tickEvent.scheduled()) {
         schedule(&tickEvent, curTick() + shader->clockPeriod());
     }
+}
+
+bool
+GPUDispatcher::wgAtBarrier(int kern_id, int wg_id)
+{
+    auto wgs = wgBarrierMap[kern_id];
+    assert(!wgs[wg_id].isFinished);
+    wgs[wg_id].atBarrier = true;
+
+    if (std::all_of(wgs.begin(), wgs.end(),
+            [](WgInfo wg){return wg.isFinished || wg.atBarrier;})) {
+        wgs[wg_id].notifiedWg = true;
+
+        // Reset vars in the event of another barrier
+        if (std::all_of(wgs.begin(), wgs.end(),
+                [](WgInfo wg){return wg.notifiedWg;})) {
+            for (WgInfo thing : wgs) {
+                thing.atBarrier = false;
+                thing.notifiedWg = false;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 void

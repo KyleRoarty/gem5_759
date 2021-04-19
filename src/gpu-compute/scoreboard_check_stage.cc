@@ -115,12 +115,28 @@ ScoreboardCheckStage::ready(Wavefront *w, nonrdytype_e *rdyStatus,
             // Are all threads at barrier?
             *rdyStatus = NRDY_BARRIER_WAIT;
             return false;
+        } else if (computeUnit.isWgBarrier(bar_id)) {
+            int id = w->wgId;
+            int kern = w->kernId;
+
+            if (computeUnit.shader->dispatcher().wgAtBarrier(kern, id)) {
+                DPRINTF(GPUSync, "CU[%d] WF[%d][%d] Wave [%d] - All WGs at barrier "
+                        "Id%d. Resetting barrier resources.\n", w->computeUnit->cu_id,
+                        w->simdId, w->wfSlotId, w->wfDynId, bar_id);
+                computeUnit.resetBarrier(bar_id);
+                computeUnit.releaseWFsFromBarrier(bar_id);
+            } else {
+                DPRINTF(GPUSync, "CU[%d] WF[%d][%d] Wave[%d] - Stalled at "
+                        "WG barrier Id%d.\n", w->computeUnit->cu_id,
+                        w->simdId, w->wfSlotId, w->wfDynId, bar_id);
+            }
+        } else {
+            DPRINTF(GPUSync, "CU[%d] WF[%d][%d] Wave[%d] - All waves at barrier "
+                    "Id%d. Resetting barrier resources.\n", w->computeUnit->cu_id,
+                    w->simdId, w->wfSlotId, w->wfDynId, bar_id);
+            computeUnit.resetBarrier(bar_id);
+            computeUnit.releaseWFsFromBarrier(bar_id);
         }
-        DPRINTF(GPUSync, "CU[%d] WF[%d][%d] Wave[%d] - All waves at barrier "
-                "Id%d. Resetting barrier resources.\n", w->computeUnit->cu_id,
-                w->simdId, w->wfSlotId, w->wfDynId, bar_id);
-        computeUnit.resetBarrier(bar_id);
-        computeUnit.releaseWFsFromBarrier(bar_id);
     }
 
     // Check WF status: it has to be running

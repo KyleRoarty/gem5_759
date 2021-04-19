@@ -43,6 +43,7 @@
 #ifndef __GPU_COMPUTE_DISPATCHER_HH__
 #define __GPU_COMPUTE_DISPATCHER_HH__
 
+#include <algorithm>
 #include <queue>
 #include <unordered_map>
 #include <vector>
@@ -57,6 +58,17 @@ class GPUCommandProcessor;
 class HSAQueueEntry;
 class Shader;
 class Wavefront;
+
+class WgInfo
+{
+  public:
+    WgInfo() : isFinished(false), atBarrier(false),
+               notifiedWg(false) {}
+
+    bool isFinished;
+    bool atBarrier;
+    bool notifiedWg;
+};
 
 class GPUDispatcher : public SimObject
 {
@@ -80,6 +92,8 @@ class GPUDispatcher : public SimObject
     void dispatch(HSAQueueEntry *task);
     HSAQueueEntry* hsaTask(int disp_id);
 
+    bool wgAtBarrier(int kern_id, int wg_id);
+
   private:
     Shader *shader;
     GPUCommandProcessor *gpuCmdProc;
@@ -91,6 +105,8 @@ class GPUDispatcher : public SimObject
     std::queue<int> doneIds;
     // is there a kernel in execution?
     bool dispatchActive;
+
+    std::unordered_map<int, std::vector<WgInfo>> wgBarrierMap;
 
   protected:
     struct GPUDispatcherStats : public Stats::Group

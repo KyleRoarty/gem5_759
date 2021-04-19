@@ -89,7 +89,7 @@ enum TLB_CACHE
 class WFBarrier
 {
   public:
-    WFBarrier() : _numAtBarrier(0), _maxBarrierCnt(0)
+    WFBarrier() : _numAtBarrier(0), _maxBarrierCnt(0), _wgBarrier(false)
     {
     }
 
@@ -177,6 +177,19 @@ class WFBarrier
     reset()
     {
         _numAtBarrier = 0;
+        _wgBarrier = false;
+    }
+
+    bool
+    isWgBarrier()
+    {
+        return _wgBarrier;
+    }
+
+    void
+    setWgBarrier(bool val)
+    {
+        _wgBarrier = val;
     }
 
   private:
@@ -195,6 +208,9 @@ class WFBarrier
      * longer considered for this barrier.
      */
     int _maxBarrierCnt;
+
+    // Is this barrier used for wg-level synchronization?
+    bool _wgBarrier;
 };
 
 class ComputeUnit : public ClockedObject
@@ -441,6 +457,8 @@ class ComputeUnit : public ClockedObject
     void releaseBarrier(int bar_id);
     void releaseWFsFromBarrier(int bar_id);
     int numBarrierSlots() const { return _numBarrierSlots; }
+    void setWgBarrier(int bar_id);
+    bool isWgBarrier(int bar_id);
 
     template<typename c0, typename c1>
     void doSmReturn(GPUDynInstPtr gpuDynInst);

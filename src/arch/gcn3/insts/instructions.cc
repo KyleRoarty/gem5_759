@@ -4112,8 +4112,27 @@ namespace Gcn3ISA
         Wavefront *wf = gpuDynInst->wavefront();
         ComputeUnit *cu = gpuDynInst->computeUnit();
 
+        ScalarRegI32 simm16 = (ScalarRegI32)sext<16>(instData.SIMM16);
+
         if (wf->hasBarrier()) {
             int bar_id = wf->barrierId();
+            if (simm16 != 0) {
+                /**
+                 * For current WG-level synchronization, we assume
+                 * that all WGs are currently dispatched, as handling
+                 * oversubscription means handling WG context switching
+                 * which is too complicated to implement swiftly
+                 */
+                int kern_id = wf->kernId;
+                auto task = cu->shader->dispatcher().hsaTask(kern_id);
+                assert(task->dispComplete());
+                if (!cu->isWgBarrier(bar_id)) {
+                    cu->setWgBarrier(bar_id);
+                    DPRINTF(GPUSync, "CU[%d] WF[%d][%d] Wave [%d] - Hit WG-level"
+                            " barrier. Marking as WG-level barrier\n",
+                            cu->cu_id, wf->simdId, wf->wfSlotId, wf->wfDynId);
+                }
+            }
             cu->incNumAtBarrier(bar_id);
             DPRINTF(GPUSync, "CU[%d] WF[%d][%d] Wave[%d] - Stalling at "
                     "barrier Id%d. %d waves now at barrier, %d waves "
