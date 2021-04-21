@@ -342,7 +342,7 @@ GPUDispatcher::notifyWgCompl(Wavefront *wf)
 bool
 GPUDispatcher::wgAtBarrier(int kern_id, int wg_id)
 {
-    auto wgs = wgBarrierMap[kern_id];
+    auto &wgs = wgBarrierMap[kern_id];
     assert(!wgs[wg_id].isFinished);
     wgs[wg_id].atBarrier = true;
 
@@ -353,7 +353,7 @@ GPUDispatcher::wgAtBarrier(int kern_id, int wg_id)
         // Reset vars in the event of another barrier
         if (std::all_of(wgs.begin(), wgs.end(),
                 [](WgInfo wg){return wg.notifiedWg;})) {
-            for (WgInfo thing : wgs) {
+            for (auto &thing : wgs) {
                 thing.atBarrier = false;
                 thing.notifiedWg = false;
             }
