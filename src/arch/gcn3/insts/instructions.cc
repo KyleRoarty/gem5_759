@@ -4123,9 +4123,6 @@ namespace Gcn3ISA
                  * oversubscription means handling WG context switching
                  * which is too complicated to implement swiftly
                  */
-                int kern_id = wf->kernId;
-                auto task = cu->shader->dispatcher().hsaTask(kern_id);
-                assert(task->dispComplete());
                 if (!cu->isWgBarrier(bar_id)) {
                     cu->setWgBarrier(bar_id);
                     DPRINTF(GPUSync, "CU[%d] WF[%d][%d] Wave [%d] - Hit WG-level"
