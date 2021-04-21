@@ -129,6 +129,7 @@ ScoreboardCheckStage::ready(Wavefront *w, nonrdytype_e *rdyStatus,
                 DPRINTF(GPUSync, "CU[%d] WF[%d][%d] Wave[%d] - Stalled at "
                         "WG barrier Id%d.\n", w->computeUnit->cu_id,
                         w->simdId, w->wfSlotId, w->wfDynId, bar_id);
+                *rdyStatus = NRDY_BARRIER_WAIT;
                 return false;
             }
         } else {
