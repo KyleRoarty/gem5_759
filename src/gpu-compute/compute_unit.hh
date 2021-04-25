@@ -89,7 +89,8 @@ enum TLB_CACHE
 class WFBarrier
 {
   public:
-    WFBarrier() : _numAtBarrier(0), _maxBarrierCnt(0), _wgBarrier(false)
+    WFBarrier() : _numAtBarrier(0), _maxBarrierCnt(0), _wgBarrier(false),
+                  _notifiedDisp(false)
     {
     }
 
@@ -178,6 +179,7 @@ class WFBarrier
     {
         _numAtBarrier = 0;
         _wgBarrier = false;
+        _notifiedDisp = false;
     }
 
     bool
@@ -192,6 +194,17 @@ class WFBarrier
         _wgBarrier = val;
     }
 
+    bool
+    haveNotifiedDisp()
+    {
+        return _notifiedDisp;
+    }
+
+    void
+    setNotified()
+    {
+        _notifiedDisp = true;
+    }
   private:
     /**
      * The number of WFs in the WG that have reached the barrier. Once
@@ -211,6 +224,8 @@ class WFBarrier
 
     // Is this barrier used for wg-level synchronization?
     bool _wgBarrier;
+    // Have we notified dispatcher our WG is at barrier?
+    bool _notifiedDisp;
 };
 
 class ComputeUnit : public ClockedObject
@@ -459,6 +474,8 @@ class ComputeUnit : public ClockedObject
     int numBarrierSlots() const { return _numBarrierSlots; }
     void setWgBarrier(int bar_id);
     bool isWgBarrier(int bar_id);
+    bool haveNotifiedDisp(int bar_id);
+    void setNotifiedDisp(int bar_id);
 
     template<typename c0, typename c1>
     void doSmReturn(GPUDynInstPtr gpuDynInst);

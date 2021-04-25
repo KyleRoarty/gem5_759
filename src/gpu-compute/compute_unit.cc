@@ -726,6 +726,20 @@ ComputeUnit::isWgBarrier(int bar_id)
     return wg_barrier.isWgBarrier();
 }
 
+bool
+ComputeUnit::haveNotifiedDisp(int bar_id)
+{
+    auto &wg_barrier = barrierSlot(bar_id);
+    return wg_barrier.haveNotifiedDisp();
+}
+
+void
+ComputeUnit::setNotifiedDisp(int bar_id)
+{
+    auto &wg_barrier = barrierSlot(bar_id);
+    wg_barrier.setNotified();
+}
+
 // Execute one clock worth of work on the ComputeUnit.
 void
 ComputeUnit::exec()

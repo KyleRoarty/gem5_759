@@ -62,12 +62,12 @@ class Wavefront;
 class WgInfo
 {
   public:
-    WgInfo() : isFinished(false), atBarrier(false),
-               notifiedWg(false) {}
+    WgInfo() : isFinished(false), atBarrier(0),
+               notifiedWg(0) {}
 
     bool isFinished;
-    bool atBarrier;
-    bool notifiedWg;
+    uint32_t atBarrier;
+    uint32_t notifiedWg;
 };
 
 class GPUDispatcher : public SimObject
@@ -92,7 +92,8 @@ class GPUDispatcher : public SimObject
     void dispatch(HSAQueueEntry *task);
     HSAQueueEntry* hsaTask(int disp_id);
 
-    bool wgAtBarrier(int kern_id, int wg_id);
+    void wgAtBarrier(int kern_id, int wg_id);
+    bool allWgAtBarrier(int kern_id, int wg_id);
 
   private:
     Shader *shader;
@@ -107,6 +108,7 @@ class GPUDispatcher : public SimObject
     bool dispatchActive;
 
     std::unordered_map<int, std::vector<WgInfo>> wgBarrierMap;
+    uint32_t currGlobalBarrier;
 
   protected:
     struct GPUDispatcherStats : public Stats::Group

@@ -37,6 +37,7 @@
 #include "debug/GPUAgentDisp.hh"
 #include "debug/GPUDisp.hh"
 #include "debug/GPUKernelInfo.hh"
+#include "debug/GPUSync.hh"
 #include "debug/GPUWgLatency.hh"
 #include "gpu-compute/gpu_command_processor.hh"
 #include "gpu-compute/hsa_queue_entry.hh"
@@ -49,7 +50,7 @@ GPUDispatcher::GPUDispatcher(const Params &p)
     : SimObject(p), shader(nullptr), gpuCmdProc(nullptr),
       tickEvent([this]{ exec(); },
           "GPU Dispatcher tick", false, Event::CPU_Tick_Pri),
-      dispatchActive(false), stats(this)
+      dispatchActive(false), currGlobalBarrier(0), stats(this)
 {
     schedule(&tickEvent, 0);
 }
@@ -302,6 +303,8 @@ GPUDispatcher::notifyWgCompl(Wavefront *wf)
     task->notifyWgCompleted();
     wgBarrierMap[kern_id][wf->wgId].isFinished = true;
 
+    DPRINTF(GPUSync, "WG Complete cycle:%d wg:%d kernel:%d cu:%d\n",
+        curTick(), wf->wgId, kern_id, wf->computeUnit->cu_id);
     DPRINTF(GPUWgLatency, "WG Complete cycle:%d wg:%d kernel:%d cu:%d\n",
         curTick(), wf->wgId, kern_id, wf->computeUnit->cu_id);
 
@@ -339,26 +342,30 @@ GPUDispatcher::notifyWgCompl(Wavefront *wf)
     }
 }
 
-bool
+void
 GPUDispatcher::wgAtBarrier(int kern_id, int wg_id)
 {
     auto &wgs = wgBarrierMap[kern_id];
     assert(!wgs[wg_id].isFinished);
-    wgs[wg_id].atBarrier = true;
+    wgs[wg_id].atBarrier += 1;
+
+    DPRINTF(GPUSync, "Marking WG %d/%d (kern %d) at barrier %d.\n",
+            wg_id, wgs.size(), kern_id, wgs[wg_id].atBarrier);
+}
+
+bool
+GPUDispatcher::allWgAtBarrier(int kern_id, int wg_id)
+{
+    auto &wgs = wgBarrierMap[kern_id];
+
+    uint32_t wg_bar = wgs[wg_id].atBarrier;
 
     if (std::all_of(wgs.begin(), wgs.end(),
-            [](WgInfo wg){return wg.isFinished || wg.atBarrier;})) {
-        wgs[wg_id].notifiedWg = true;
+        [&](WgInfo wg){return wg.isFinished || wg.atBarrier >= wg_bar;})) {
 
-        // Reset vars in the event of another barrier
-        if (std::all_of(wgs.begin(), wgs.end(),
-                [](WgInfo wg){return wg.notifiedWg;})) {
-            for (auto &thing : wgs) {
-                thing.atBarrier = false;
-                thing.notifiedWg = false;
-            }
-        }
-
+        DPRINTF(GPUSync, "WG %d: All other WGs at barrier, "
+                "resuming execution.\n", wg_id);
+        currGlobalBarrier = wg_bar+1;
         return true;
     }
 

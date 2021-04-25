@@ -119,9 +119,14 @@ ScoreboardCheckStage::ready(Wavefront *w, nonrdytype_e *rdyStatus,
             int id = w->wgId;
             int kern = w->kernId;
 
-            if (computeUnit.shader->dispatcher().wgAtBarrier(kern, id)) {
-                DPRINTF(GPUSync, "CU[%d] WF[%d][%d] Wave [%d] - All WGs at barrier "
-                        "Id%d. Resetting barrier resources.\n", w->computeUnit->cu_id,
+                if (!computeUnit.haveNotifiedDisp(bar_id)) {
+                computeUnit.shader->dispatcher().wgAtBarrier(kern, id);
+                computeUnit.setNotifiedDisp(bar_id);
+                }
+            if (computeUnit.shader->dispatcher().allWgAtBarrier(kern, id)) {
+                DPRINTF(GPUSync, "CU[%d] WF[%d][%d] Wave [%d] - "
+                        "All WGs at barrier Id%d. Resetting barrier "
+                        "resources.\n", w->computeUnit->cu_id,
                         w->simdId, w->wfSlotId, w->wfDynId, bar_id);
                 computeUnit.resetBarrier(bar_id);
                 computeUnit.releaseWFsFromBarrier(bar_id);
