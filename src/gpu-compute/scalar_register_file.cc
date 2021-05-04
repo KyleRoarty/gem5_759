@@ -51,7 +51,8 @@ bool
 ScalarRegisterFile::operandsReady(Wavefront *w, GPUDynInstPtr ii) const
 {
     for (int i = 0; i < ii->getNumOperands(); ++i) {
-        if (ii->isScalarRegister(i) && ii->isSrcOperand(i)) {
+        if (ii->isScalarRegister(i) &&
+            (ii->isSrcOperand(i) || ii->isDstOperand(i))) {
 
             int sgprIdx = ii->getRegisterIndex(i, ii);
             int nRegs = ii->getOperandSize(i) <= 4 ? 1 :

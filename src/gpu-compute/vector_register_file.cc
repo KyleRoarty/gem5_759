@@ -58,7 +58,8 @@ bool
 VectorRegisterFile::operandsReady(Wavefront *w, GPUDynInstPtr ii) const
 {
     for (int i = 0; i < ii->getNumOperands(); ++i) {
-        if (ii->isVectorRegister(i) && ii->isSrcOperand(i)) {
+        if (ii->isVectorRegister(i) &&
+            (ii->isSrcOperand(i) || ii->isDstOperand(i))) {
             int vgprIdx = ii->getRegisterIndex(i, ii);
 
             // determine number of registers
@@ -111,7 +112,7 @@ VectorRegisterFile::scheduleWriteOperands(Wavefront *w, GPUDynInstPtr ii)
                      * reg(s).
                      */
                     if (!ii->isLoad() || (ii->isLoad()
-                        && ii->exec_mask.any())) {
+                        && w->execMask().any())) {
                         markReg(physReg, true);
                     }
                 }
