@@ -46,3 +46,4 @@ if env['TARGET_GPU_ISA'] == 'gcn3':
     Source('isa.cc')
     Source('registers.cc')
     DebugFlag('GCN3', 'Debug flag for GCN3 GPU ISA')
+    DebugFlag('Blah', 'Temp debug flag')

@@ -58547,6 +58547,8 @@ namespace Gcn3ISA
         } // isDstOperand
 
         void execute(GPUDynInstPtr) override;
+        void initiateAcc(GPUDynInstPtr) override;
+        void completeAcc(GPUDynInstPtr) override;
     }; // Inst_DS__DS_ADD_U32
 
     class Inst_DS__DS_SUB_U32 : public Inst_DS

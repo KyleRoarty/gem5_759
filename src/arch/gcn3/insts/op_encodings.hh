@@ -38,6 +38,7 @@
 #include "arch/gcn3/gpu_mem_helpers.hh"
 #include "arch/gcn3/insts/gpu_static_inst.hh"
 #include "arch/gcn3/operand.hh"
+#include "debug/Blah.hh"
 #include "debug/GCN3.hh"
 #include "debug/GPUExec.hh"
 #include "mem/ruby/system/RubySystem.hh"
@@ -485,6 +486,25 @@ namespace Gcn3ISA
                         gpuDynInst->d_data))[lane * 2]);
                     wf->ldsChunk->write<T>(vaddr1, (reinterpret_cast<T*>(
                         gpuDynInst->d_data))[lane * 2 + 1]);
+                }
+            }
+        }
+
+        template<typename T>
+        void
+        initMemAdd(GPUDynInstPtr gpuDynInst, Addr offset)
+        {
+            Wavefront *wf = gpuDynInst->wavefront();
+
+            for (int lane  = 0; lane < NumVecElemPerVecReg; ++lane) {
+                if (gpuDynInst->exec_mask[lane]) {
+                    Addr vaddr = gpuDynInst->addr[lane] + offset;
+                    DPRINTF(Blah, "DS_ADD: LDS addr[%d] = %#x\n", lane, vaddr);
+                    T tmp = wf->ldsChunk->read<T>(vaddr);
+                    wf->ldsChunk->write<T>(vaddr, tmp + (reinterpret_cast<T*>(
+                        gpuDynInst->d_data))[lane]);
+                    (reinterpret_cast<T*>(gpuDynInst->d_data))[lane]
+                        = tmp;
                 }
             }
         }
