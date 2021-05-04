@@ -119,10 +119,11 @@ ScoreboardCheckStage::ready(Wavefront *w, nonrdytype_e *rdyStatus,
             int id = w->wgId;
             int kern = w->kernId;
 
-                if (!computeUnit.haveNotifiedDisp(bar_id)) {
+            if (!computeUnit.haveNotifiedDisp(bar_id)) {
                 computeUnit.shader->dispatcher().wgAtBarrier(kern, id);
                 computeUnit.setNotifiedDisp(bar_id);
-                }
+            }
+
             if (computeUnit.shader->dispatcher().allWgAtBarrier(kern, id)) {
                 DPRINTF(GPUSync, "CU[%d] WF[%d][%d] Wave [%d] - "
                         "All WGs at barrier Id%d. Resetting barrier "
