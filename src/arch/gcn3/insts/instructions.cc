@@ -39771,8 +39771,13 @@ namespace Gcn3ISA
                 .issueRequest(gpuDynInst);
             wf->rdGmReqsInPipe--;
             wf->outstandingReqsRdGm++;
+        } else if (gpuDynInst->executedAs() == Enums::SC_GROUP) {
+            gpuDynInst->computeUnit()->localMemoryPipe
+                .issueRequest(gpuDynInst);
+            wf->rdLmReqsInPipe--;
+            wf->outstandingReqsRdLm++;
         } else {
-            fatal("Non global flat instructions not implemented yet.\n");
+            fatal("Non global or group flat instructions not implemented.\n");
         }
 
         gpuDynInst->wavefront()->outstandingReqs++;
@@ -40212,16 +40217,30 @@ namespace Gcn3ISA
         gpuDynInst->latency.set(gpuDynInst->computeUnit()->clockPeriod());
 
         ConstVecOperandU64 addr(gpuDynInst, extData.ADDR);
+        ConstVecOperandU32 data(gpuDynInst, extData.DATA);
 
         addr.read();
+        data.read();
 
         calcAddr(gpuDynInst, addr);
+
+        for (int lane = 0; lane < NumVecElemPerVecReg; ++lane) {
+            if (gpuDynInst->exec_mask[lane]) {
+                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane]
+                    = data[lane];
+            }
+        }
 
         if (gpuDynInst->executedAs() == Enums::SC_GLOBAL) {
             gpuDynInst->computeUnit()->globalMemoryPipe
                 .issueRequest(gpuDynInst);
             wf->wrGmReqsInPipe--;
             wf->outstandingReqsWrGm++;
+        } else if (gpuDynInst->executedAs() == Enums::SC_GROUP) {
+            gpuDynInst->computeUnit()->localMemoryPipe.
+                issueRequest(gpuDynInst);
+            wf->wrLmReqsInPipe--;
+            wf->outstandingReqsWrLm++;
         } else {
             fatal("Non global flat instructions not implemented yet.\n");
         }
@@ -40233,16 +40252,6 @@ namespace Gcn3ISA
     void
     Inst_FLAT__FLAT_STORE_DWORD::initiateAcc(GPUDynInstPtr gpuDynInst)
     {
-        ConstVecOperandU32 data(gpuDynInst, extData.DATA);
-        data.read();
-
-        for (int lane = 0; lane < NumVecElemPerVecReg; ++lane) {
-            if (gpuDynInst->exec_mask[lane]) {
-                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane]
-                    = data[lane];
-            }
-        }
-
         initMemWrite<VecElemU32>(gpuDynInst);
     } // initiateAcc
 
