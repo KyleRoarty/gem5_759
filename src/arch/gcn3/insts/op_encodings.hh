@@ -803,7 +803,19 @@ namespace Gcn3ISA
         void
         initMemRead(GPUDynInstPtr gpuDynInst)
         {
-            initMemReqHelper<T, 1>(gpuDynInst, MemCmd::ReadReq);
+            if (gpuDynInst->executedAs() == Enums::SC_GLOBAL) {
+                initMemReqHelper<T, 1>(gpuDynInst, MemCmd::ReadReq);
+            } else if (gpuDynInst->executedAs() == Enums::SC_GROUP) {
+                Wavefront *wf = gpuDynInst->wavefront();
+
+                for (int lane = 0; lane < NumVecElemPerVecReg; ++lane) {
+                    if (gpuDynInst->exec_mask[lane]) {
+                        Addr vaddr = gpuDynInst->addr[lane];
+                        (reinterpret_cast<T*>(gpuDynInst->d_data))[lane]
+                            = wf->ldsChunk->read<T>(vaddr);
+                    }
+                }
+            }
         }
 
         template<int N>
@@ -817,7 +829,19 @@ namespace Gcn3ISA
         void
         initMemWrite(GPUDynInstPtr gpuDynInst)
         {
-            initMemReqHelper<T, 1>(gpuDynInst, MemCmd::WriteReq);
+            if (gpuDynInst->executedAs() == Enums::SC_GLOBAL) {
+                initMemReqHelper<T, 1>(gpuDynInst, MemCmd::WriteReq);
+            } else if (gpuDynInst->executedAs() == Enums::SC_GROUP) {
+                Wavefront *wf = gpuDynInst->wavefront();
+
+                for (int lane = 0; lane < NumVecElemPerVecReg; ++lane) {
+                    if (gpuDynInst->exec_mask[lane]) {
+                        Addr vaddr = gpuDynInst->addr[lane];
+                        wf->ldsChunk->write<T>(vaddr,
+                            (reinterpret_cast<T*>(gpuDynInst->d_data))[lane]);
+                    }
+                }
+            }
         }
 
         template<int N>

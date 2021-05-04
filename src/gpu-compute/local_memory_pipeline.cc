@@ -73,6 +73,11 @@ LocalMemPipeline::exec()
         lmReturnedRequests.pop();
         w = m->wavefront();
 
+        if (m->isFlat() && !m->isMemSync() && !m->isEndOfKernel()
+            && m->allLanesZero()) {
+            computeUnit.getTokenManager()->recvTokens(1);
+        }
+
         DPRINTF(GPUMem, "CU%d: WF[%d][%d]: Completing local mem instr %s\n",
                 m->cu_id, m->simdId, m->wfSlotId, m->disassemble());
         m->completeAcc(m);
@@ -113,6 +118,7 @@ LocalMemPipeline::exec()
         if (!returnVal) {
             DPRINTF(GPUPort, "packet was nack'd and put in retry queue");
         }
+
         lmIssuedRequests.pop();
     }
 }

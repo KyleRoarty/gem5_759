@@ -840,7 +840,8 @@ GPUDynInst::resolveFlatSegment(const VectorMask &mask)
             if (mask[lane]) {
                 // flat address calculation goes here.
                 // addr[lane] = segmented address
-                panic("Flat group memory operation is unimplemented!\n");
+                addr[lane] = addr[lane] -
+                    wavefront()->computeUnit->shader->ldsApe().base;
             }
         }
         wavefront()->execUnitId =  wavefront()->flatLmUnitId;
