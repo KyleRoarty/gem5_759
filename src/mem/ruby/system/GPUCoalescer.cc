@@ -316,7 +316,8 @@ GPUCoalescer::printRequestTable(std::stringstream& ss)
                << "\t\tIssue time: "
                << request->getIssueTime() * clockPeriod() << "\n"
                << "\t\tDifference from current tick: "
-               << (curCycle() - request->getIssueTime()) * clockPeriod();
+               << (curCycle() - request->getIssueTime()) * clockPeriod()
+               << "\n";
         }
     }
 
